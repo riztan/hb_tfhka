@@ -1,4 +1,4 @@
-# hb_tfhka
+# hbtfhka
 Modulo Harbour para Fiscalizador de "The Factory HKA"
 
 El programa se apoya en la libreria Telepathy incluida en la contrib de Harbour 3.2
