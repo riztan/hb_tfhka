@@ -65,12 +65,6 @@ PROCEDURE MAIN( cCommand )
    ? "Status: ", hb_ValToExp( hStatus )
 
 
-   if Empty( cCommand ) 
-      oFiscal:End()
-      return
-   endif
-
-
    FOR I:= 1 TO 5
       cI := ALLTRIM(STR(I)) 
       ? STRTRAN("Obteniendo Status% 'S%' ","%",cI)
@@ -96,7 +90,10 @@ PROCEDURE MAIN( cCommand )
 
    NEXT I
 
-oFiscal:End()
+   ?
+
+   oFiscal:End()
+
 return
 
 //eof
