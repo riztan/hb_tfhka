@@ -1,0 +1,7 @@
+description=The Factory HKA - serial communication
+
+incpaths=.
+
+headers=tfhka.ch
+
+libs=${_HB_DYNPREF}${hb_name}${_HB_DYNSUFF}

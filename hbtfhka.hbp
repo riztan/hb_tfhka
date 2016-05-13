@@ -1,0 +1,21 @@
+-hblib
+-inc
+
+
+-L/usr/local/lib/harbour
+-lhbtpathy
+
+-i/usr/local/share/harbour/contrib/hbtpathy/
+#-i/usr/local/share/harbour/contrib/hbtfhka/
+
+-o${hb_name}
+
+
+-w3 -es2
+#-i${hb_inc}/hbtpahy
+#-depincpath=hbtpathy:/usr/local/harbour/lib/hbtpathy
+#-depincpath=hbtpathy:${hb_lib3rd}/hbtpathy
+
+${hb_name}.hbx
+
+tfhka.prg
