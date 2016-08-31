@@ -328,25 +328,23 @@ METHOD SENDCMD( cCommand, cError )  CLASS TFHKA
 //? procname(), " - ", cSignal, " - ", FIS_CmdToHex(cSignal)
    lError := .f.
 //? StrToHex(cCommand)
-   cResp := SendSignal( ::nPort, FIS_CmdToHex(cCommand), @lError )
+   cResp := SendSignal( ::nPort, FIS_CmdToHex(cCommand), @lError, @cError )
 //? procname(), "aqui...", cCommand
 //? StrToHex(cResp)
 //nErrorCode := tp_send( nPort, FIS_CmdToHex( cCommand ), 1 )
    if lError
-      ? procname(), "Error"
+      ? procname(), "| Error  "
+      ? procname(), "| "+cError
       ? HexToStr(cResp)
+/*
       if Empty(cResp)
-         cError := "No se recibio respuesta."
-
+         //cError := "No se recibio respuesta."
          return cResp
       endif
       if cResp == Hex_NAK
-         cError := "(NAK) El comando no es reconcido."
+         //cError := "(NAK) El comando no es reconcido."
       endif
-//   else
-//      if cResp == Hex_ACK
-//    ? procname(), " OK - Fino! "
-//      endif
+*/
    endif
 RETURN cResp
 
@@ -460,19 +458,44 @@ Return cResp
 
 
 
-
 /** Envia una señal a la impresora fiscal y si la
  *  trama recibida es correcta, retorna los valores. 
  *  Caso contrario, retorna cadena vacia.
  */
-STATIC FUNCTION SendSignal( nPort, cHexSignal, lError )
-  local cResp
+STATIC FUNCTION SendSignal( nPort, cHexSignal, lError, cError )
+  local cResp, nCont := 1, nDTR
   tp_send( nPort, cHexSignal, _TPTIME_OUT_ )
   tp_inkey(.5)
   lError := .F.
-  cResp := tp_recv( nPort,,_TPTIME_OUT_ )
 
-  if !CheckTrama( cResp ) .or. empty(cResp)
+  cResp := tp_recv( nPort,,_TPTIME_OUT_ )
+  nDTR := tp_ctrldtr( nPort )
+
+  if Empty(cResp) .and. nDTR=0
+     Do While nDTR=0 .and. nCont <=10 .and. Empty(cResp)
+        hb_IdleSleep( .5 )
+        cResp := tp_recv( nPort,,_TPTIME_OUT_ )
+        nDTR  := tp_ctrldtr( nPort )
+        nCont++
+     EndDo
+     if nCont > 10
+        lError := .T.
+        cError := "Máximo de reintentos."
+        return ""
+     endif
+     if empty( cResp ) 
+        lError := .T.
+        if nDTR=0
+           cError := "Dispositivo ocupado."
+        else
+           cError := "Error desconocido."
+        endif
+     endif
+     return ""
+  endif
+
+
+  if !CheckTrama( cResp ) //.or. empty(cResp)
 ? "aparentemente error... porque?      "
 ? "se envia NAK al dispositivo fiscal. "
 ? cResp
@@ -481,19 +504,20 @@ STATIC FUNCTION SendSignal( nPort, cHexSignal, lError )
      return cResp
   else
 ? procname(),". Trama recibida es correcta."
-? cResp
+//? cResp
 ?
   endif
 
   if cResp == Hex_ACK
 //? procname(), "  OK"
-      return cResp
-   endif
-   if cResp == Hex_NAK 
-      SendSignal( nPort, STR_ENQ, _TPTIME_OUT_ )
-      lError := .t.
-      return cResp
-   endif
+     return cResp
+  endif
+
+  if cResp == Hex_NAK 
+     lError := .T.
+     cError := "Comando Incorrecto."
+     SendSignal( nPort, STR_ENQ, _TPTIME_OUT_ )
+  endif
 
 RETURN cResp
 
