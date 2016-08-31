@@ -120,6 +120,7 @@ METHOD NEW( nPort, nBaud, nData, cParity, nStop, cPortName, cError ) CLASS TFHKA
    ::cParity := cParity
    ::nStop   := nStop
 
+
    nError := tp_Open( ::nPort,,, ::nBaud, ::nData, ::cParity, ::nStop )
 
    if nError != 0
@@ -336,6 +337,7 @@ METHOD SENDCMD( cCommand, cError )  CLASS TFHKA
       ? HexToStr(cResp)
       if Empty(cResp)
          cError := "No se recibio respuesta."
+
          return cResp
       endif
       if cResp == Hex_NAK
@@ -469,22 +471,30 @@ STATIC FUNCTION SendSignal( nPort, cHexSignal, lError )
   tp_inkey(.5)
   lError := .F.
   cResp := tp_recv( nPort,,_TPTIME_OUT_ )
-  if !CheckTrama( cResp )
-      if cResp == Hex_ACK
-//? procname(), "  OK"
-         return cResp
-      endif
-      if cResp == Hex_NAK 
-         lError := .t.
-         return cResp
-      endif
-//      cResp := ""
-? "aparentemente error... porque?"
+
+  if !CheckTrama( cResp ) .or. empty(cResp)
+? "aparentemente error... porque?      "
+? "se envia NAK al dispositivo fiscal. "
 ? cResp
-      lError := .t.
-else
-? "trama recibida es correcta."
+     lError := .t.
+     SendSignal( nPort, STR_NAK, _TPTIME_OUT_ )
+     return cResp
+  else
+? procname(),". Trama recibida es correcta."
+? cResp
+?
   endif
+
+  if cResp == Hex_ACK
+//? procname(), "  OK"
+      return cResp
+   endif
+   if cResp == Hex_NAK 
+      SendSignal( nPort, STR_ENQ, _TPTIME_OUT_ )
+      lError := .t.
+      return cResp
+   endif
+
 RETURN cResp
 
 
